@@ -121,44 +121,63 @@ namespace MandatoryLearningReminder.Repository
                                 if (dt.Rows.Count <= 0)
                                 {
                                     reader.Dispose();
+                                    cmd.CommandText = "UpdateForEmailRemainder";
+                                    cmd.Parameters.Add(new SqlParameter("@ScheduleID", SqlDbType.Int) { Value = iltmail.ScheduleId });
+                                    cmd.Parameters.Add(new SqlParameter("@CourseID", SqlDbType.Int) { Value = iltmail.CourseId });
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    DbDataReader reader1 = await cmd.ExecuteReaderAsync();
                                     connection.Close();
-                                    return i;
                                 }
-                                foreach (DataRow row in dt.Rows)
+                                else if (DateTime.Now.Date > iltmail.CreatedDate.AddDays((double)iltmail.FirstRemDays) &&
+                                        DateTime.Now.Date > iltmail.CreatedDate.AddDays((double)iltmail.SecondRemDays) &&
+                                        DateTime.Now.Date > iltmail.CreatedDate.AddDays((double)iltmail.ThirdRemDays) &&
+                                        DateTime.Now.Date > iltmail.CreatedDate.AddDays((double)iltmail.FourthRemDays) &&
+                                        DateTime.Now.Date > iltmail.CreatedDate.AddDays((double)iltmail.FifthRemDays))
                                 {
-                                    i++;
-                                    UserForEmailRemainder userForEmailRemainder = new UserForEmailRemainder();
-                                    userForEmailRemainder.EmailAddress = Security.Decrypt(row["EmailId"].ToString());
-                                    userForEmailRemainder.UserName = row["EmailId"].ToString();
-                                    if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.FirstRemDays)))
+                                    cmd.CommandText = "UpdateForEmailRemainder";
+                                    cmd.Parameters.Add(new SqlParameter("@ScheduleID", SqlDbType.Int) { Value = iltmail.ScheduleId });
+                                    cmd.Parameters.Add(new SqlParameter("@CourseID", SqlDbType.Int) { Value = iltmail.CourseId });
+                                    cmd.CommandType = CommandType.StoredProcedure;
+                                    DbDataReader reader1 = await cmd.ExecuteReaderAsync();
+                                }
+                                else
+                                {
+                                    foreach (DataRow row in dt.Rows)
                                     {
-                                        await this.EmailReminder(TemplateTitles.FirstReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
-                                        Task.CompletedTask.Wait();
                                         i++;
-                                    }
-                                    else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.SecondRemDays)))
-                                    {
-                                        await this.EmailReminder(TemplateTitles.SecondReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
-                                        Task.CompletedTask.Wait();
-                                        i++;
-                                    }
-                                    else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.ThirdRemDays)))
-                                    {
-                                        await this.EmailReminder(TemplateTitles.ThirdReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
-                                        Task.CompletedTask.Wait();
-                                        i++;
-                                    }
-                                    else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.FourthRemDays)))
-                                    {
-                                        await this.EmailReminder(TemplateTitles.ForthReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
-                                        Task.CompletedTask.Wait();
-                                        i++;
-                                    }
-                                    else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.FifthRemDays )))
-                                    {
-                                        await this.EmailReminder(TemplateTitles.FifthReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
-                                        Task.CompletedTask.Wait();
-                                        i++;
+                                        UserForEmailRemainder userForEmailRemainder = new UserForEmailRemainder();
+                                        userForEmailRemainder.EmailAddress = Security.Decrypt(row["EmailId"].ToString());
+                                        userForEmailRemainder.UserName = row["EmailId"].ToString();
+                                        if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.FirstRemDays)))
+                                        {
+                                            await this.EmailReminder(TemplateTitles.FirstReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
+                                            Task.CompletedTask.Wait();
+                                            i++;
+                                        }
+                                        else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.SecondRemDays)))
+                                        {
+                                            await this.EmailReminder(TemplateTitles.SecondReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
+                                            Task.CompletedTask.Wait();
+                                            i++;
+                                        }
+                                        else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.ThirdRemDays)))
+                                        {
+                                            await this.EmailReminder(TemplateTitles.ThirdReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
+                                            Task.CompletedTask.Wait();
+                                            i++;
+                                        }
+                                        else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.FourthRemDays)))
+                                        {
+                                            await this.EmailReminder(TemplateTitles.ForthReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
+                                            Task.CompletedTask.Wait();
+                                            i++;
+                                        }
+                                        else if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.FifthRemDays)))
+                                        {
+                                            await this.EmailReminder(TemplateTitles.FifthReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
+                                            Task.CompletedTask.Wait();
+                                            i++;
+                                        }
                                     }
                                 }
                             }
@@ -248,10 +267,10 @@ namespace MandatoryLearningReminder.Repository
                             emailNotificationList.Add((emailNotification));
 
                             emailCount++;
-                            
-                                _ = _message.SendEmailAsyncNew(emailNotificationList, Program.OrgnaizationCode, MailConfiguration);
-                                emailNotificationList.Clear();
-                            
+
+                            _ = _message.SendEmailAsyncNew(emailNotificationList, Program.OrgnaizationCode, MailConfiguration);
+                            emailNotificationList.Clear();
+
 
                         }
                     }
