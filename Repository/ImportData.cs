@@ -67,7 +67,7 @@ namespace MandatoryLearningReminder.Repository
                                 iltscheduleMailReminder.SecondRemDays = int.Parse(row["SecondRemDays"].ToString());
                                 iltscheduleMailReminder.ThirdRemDays = int.Parse(row["ThirdRemDays"].ToString());
                                 iltscheduleMailReminder.FourthRemDays = int.Parse(row["FourthRemDays"].ToString());
-                                iltscheduleMailReminder.FirstRemDays = int.Parse(row["FirstRemDays"].ToString());
+                                iltscheduleMailReminder.FifthRemDays = int.Parse(row["FifthRemDays"].ToString());
                                 iltscheduleMailReminder.FirstRemTemplate = row["FirstRemTemplate"].ToString();
                                 iltscheduleMailReminder.SecondRemTemplate = row["SecondRemTemplate"].ToString();
                                 iltscheduleMailReminder.ThirdRemTemplate = row["ThirdRemTemplate"].ToString();
@@ -122,10 +122,10 @@ namespace MandatoryLearningReminder.Repository
                                 {
                                     reader.Dispose();
                                     cmd.CommandText = "UpdateForEmailRemainder";
-                                    cmd.Parameters.Add(new SqlParameter("@ScheduleID", SqlDbType.Int) { Value = iltmail.ScheduleId });
-                                    cmd.Parameters.Add(new SqlParameter("@CourseID", SqlDbType.Int) { Value = iltmail.CourseId });
+                                    //cmd.Parameters.Add(new SqlParameter("@ScheduleID", SqlDbType.Int) { Value = iltmail.ScheduleId });
+                                    //cmd.Parameters.Add(new SqlParameter("@CourseID", SqlDbType.Int) { Value = iltmail.CourseId });
                                     cmd.CommandType = CommandType.StoredProcedure;
-                                    DbDataReader reader1 = await cmd.ExecuteReaderAsync();
+                                    await cmd.ExecuteNonQueryAsync();
                                     connection.Close();
                                 }
                                 else if (DateTime.Now.Date > iltmail.CreatedDate.AddDays((double)iltmail.FirstRemDays) &&
@@ -135,8 +135,8 @@ namespace MandatoryLearningReminder.Repository
                                         DateTime.Now.Date > iltmail.CreatedDate.AddDays((double)iltmail.FifthRemDays))
                                 {
                                     cmd.CommandText = "UpdateForEmailRemainder";
-                                    cmd.Parameters.Add(new SqlParameter("@ScheduleID", SqlDbType.Int) { Value = iltmail.ScheduleId });
-                                    cmd.Parameters.Add(new SqlParameter("@CourseID", SqlDbType.Int) { Value = iltmail.CourseId });
+                                    //cmd.Parameters.Add(new SqlParameter("@ScheduleID", SqlDbType.Int) { Value = iltmail.ScheduleId });
+                                    //cmd.Parameters.Add(new SqlParameter("@CourseID", SqlDbType.Int) { Value = iltmail.CourseId });
                                     cmd.CommandType = CommandType.StoredProcedure;
                                     DbDataReader reader1 = await cmd.ExecuteReaderAsync();
                                 }
@@ -147,7 +147,7 @@ namespace MandatoryLearningReminder.Repository
                                         i++;
                                         UserForEmailRemainder userForEmailRemainder = new UserForEmailRemainder();
                                         userForEmailRemainder.EmailAddress = Security.Decrypt(row["EmailId"].ToString());
-                                        userForEmailRemainder.UserName = row["EmailId"].ToString();
+                                        userForEmailRemainder.UserName = row["UserName"].ToString();
                                         if (DateTime.Now.Date == (iltmail.CreatedDate.AddDays((double)iltmail.FirstRemDays)))
                                         {
                                             await this.EmailReminder(TemplateTitles.FirstReminderEmail, iltmail, userForEmailRemainder.UserName, userForEmailRemainder.EmailAddress);
@@ -217,7 +217,7 @@ namespace MandatoryLearningReminder.Repository
                     }
                     string RegardName = _message.GetRegardsName(Program.OrgnaizationCode);
 
-                    MailServerConfiguration MailConfiguration = await _message.GetMailConfiguration();
+                    MailServerConfiguration MailConfiguration = await _message.GetMailConfiguration(Program.OrgnaizationCode);
 
                     List<EmailNotification> emailNotificationList = new List<EmailNotification>();
                     int emailCount = 0;

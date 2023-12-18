@@ -11,7 +11,7 @@ namespace IltscheduleMailReminderSchedule.Interface
     {
         Task<int> SendEmailAsyncNew(List<EmailNotification> lstemailNotifications, string orgCode, MailServerConfiguration mailConfiguration);
 
-        Task<MailServerConfiguration> GetMailConfiguration();
+        Task<MailServerConfiguration> GetMailConfiguration(string orgCode);
         EmpoweredTLSContext GetDbContext();
         string GetRegardsName(string OrganizationCode);
         Task<List<ConfigurableParameter>> GetUserConfigurationValueAsync(string[] str_arr, string orgCode, string defaultValue = "0");

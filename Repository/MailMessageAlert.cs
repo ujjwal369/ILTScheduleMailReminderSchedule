@@ -79,7 +79,7 @@ namespace IltscheduleMailReminderSchedule.Repository
                             GetEmailBodyWithImages(lstImagesPath, ref mimeMessage);
                         }
 
-                        GetSmtpClient(mailConfiguration).SendMailAsync(mimeMessage).GetAwaiter().GetResult();
+                        await GetSmtpClient(mailConfiguration).SendMailAsync(mimeMessage);
 
                     }
                     item.Description = "Success";
@@ -249,18 +249,50 @@ namespace IltscheduleMailReminderSchedule.Repository
                 mailMessage.AlternateViews.Add(view);
             }
         }
-        public async Task<MailServerConfiguration> GetMailConfiguration()
+        public async Task<MailServerConfiguration> GetMailConfiguration(string orgCode)
         {
+            MailServerConfiguration MailObj = null;
             try
             {
-                MailServerConfiguration mailServerConfiguration = new MailServerConfiguration();
+                using (var dbContext = GetDbContext())
+                {
+                    using (var connection = dbContext.Database.GetDbConnection())
+                    {
+                        if (connection.State == ConnectionState.Broken || connection.State == ConnectionState.Closed)
+                            connection.Open();
 
-                mailServerConfiguration = await _dbContext.MailServerConfiguration.Where(a => a.IsActive == true && a.IsDeleted == false).FirstOrDefaultAsync();
-                return mailServerConfiguration;
+                        using (var cmd = connection.CreateCommand())
+                        {
+                            cmd.CommandText = "GetMailServerDetails";
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            DbDataReader reader = await cmd.ExecuteReaderAsync();
+                            DataTable dt = new DataTable();
+                            dt.Load(reader);
+                            if (dt.Rows.Count > 0)
+                            {
+                                MailObj = new MailServerConfiguration();
+                                MailObj.ConnectionMode = Convert.ToString(dt.Rows[0]["ConnectionMode"]);
+                                MailObj.CustomerCode = Convert.ToString(dt.Rows[0]["CustomerCode"]);
+                                MailObj.FromEmailName = Convert.ToString(dt.Rows[0]["FromEmailAddress"]);
+                                MailObj.HostName = Convert.ToString(dt.Rows[0]["HostName"]);
+                                MailObj.Port = Convert.ToInt32(dt.Rows[0]["Port"].ToString());
+                                MailObj.ReplyEmailName = Convert.ToString(dt.Rows[0]["ReplyEmailName"]);
+                                MailObj.UseSecureConnection = Convert.ToBoolean(dt.Rows[0]["UseSecureConnection"]);
+                                MailObj.UserName = Convert.ToString(dt.Rows[0]["UserName"]);
+                                MailObj.UserPassword = Convert.ToString(dt.Rows[0]["UserPassword"]);
+                            }
+                            reader.Dispose();
+                        }
+                        connection.Close();
+                    }
+                }
             }
             catch (Exception ex)
-            { _logger.Error(string.Format("Exception in function GetMailConfigurationAsync :- {0} Organization Code :- {1} ", ex.Message.ToString(), Program.OrgnaizationCode)); }
-            return null;
+            {
+                _logger.Error("Exception in function GetEmailForConfiguration :-" + Utilities.GetDetailedException(ex));
+                throw;
+            }
+            return MailObj;
         }
         public static System.Net.Mail.SmtpClient GetSmtpClient(MailServerConfiguration mailConfiguration)
         {
